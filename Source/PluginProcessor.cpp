@@ -95,6 +95,16 @@ void SimpleEQAudioProcessor::prepareToPlay (double sampleRate, int samplesPerBlo
 {
     // Use this method as the place to do any pre-playback
     // initialisation that you need..
+    //passing a processing spec object
+    juce::dsp::ProcessSpec spec;
+    
+    //needs to know max amount of samples to process 
+    spec.maximumBlockSize = samplesPerBlock;
+
+    spec.numChannels = 1;
+    spec.sampleRate = sampleRate;
+    leftChain.prepare(spec);
+    rightChain.prepare(spec);
 }
 
 void SimpleEQAudioProcessor::releaseResources()
@@ -144,18 +154,28 @@ void SimpleEQAudioProcessor::processBlock (juce::AudioBuffer<float>& buffer, juc
     for (auto i = totalNumInputChannels; i < totalNumOutputChannels; ++i)
         buffer.clear (i, 0, buffer.getNumSamples());
 
-    // This is the place where you'd normally do the guts of your plugin's
-    // audio processing...
-    // Make sure to reset the state if your inner loop is processing
-    // the samples and the outer loop is handling the channels.
-    // Alternatively, you can process the samples with the channels
-    // interleaved by keeping the same state.
-    for (int channel = 0; channel < totalNumInputChannels; ++channel)
-    {
-        auto* channelData = buffer.getWritePointer (channel);
+ 
+    // The Processing Chain requires a processing context to be passed to it 
+    // in order run the audio through the links in the chain
+    // we need to extract the left and right channel from this buffer.
+    // we need an 
 
-        // ..do something to the data...
-    }
+    //inititate an audio buffer
+    juce::dsp::AudioBlock<float> block(buffer);
+
+    //helper funcition to extract individual channels from the buffer
+    auto leftBlock = block.getSingleChannelBlock(0); //left channel
+    auto rightBlock = block.getSingleChannelBlock(1); // right channel
+
+    //create processing context that wraps each indivudual block
+    juce::dsp::ProcessContextReplacing<float> leftContext(leftBlock);
+    juce::dsp::ProcessContextReplacing<float> rightContext(rightBlock);
+
+    //pass contexts to the mono filter chains
+    leftChain.process(leftContext);
+    rightChain.process(rightContext);
+
+
 }
 
 //==============================================================================
