@@ -10,6 +10,18 @@
 
 #include <JuceHeader.h>
 
+//Extracting parameters from the audio processor value tree state
+struct ChainSettings
+{
+    float peakFreq{ 0 }, peakGainInDecibels{ 0 }, peakQuality{ 1.f };
+    float lowCutFreq{ 0 }, highCutFreq{ 0 };
+    int lowCutSlope{ 0 }, highCutSlope{ 0 }; 
+
+};
+
+//helper function that will give us parameter values in data struct
+ChainSettings getChainSettings(juce::AudioProcessorValueTreeState& apvts);
+
 //==============================================================================
 /**
 */
